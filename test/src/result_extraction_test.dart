@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pure_result/pure_result.dart';
 
-import 'support/test_types.dart';
+import 'test_types.dart';
 
 void main() {
   group('Result extraction', () {
