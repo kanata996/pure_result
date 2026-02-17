@@ -127,6 +127,7 @@ void main() {
 
       expect(mapped, const Result<int, Object>.success(12));
       expect(mappedThrown.isFailure, isTrue);
+      expect(mappedThrown.errorOrNull, isA<CaughtError>());
       expect(mappedFailure, const Result<int, Object>.failure(_TestError('x')));
     });
 
@@ -140,6 +141,7 @@ void main() {
 
       expect(recovered, const Result<int, Object>.success(9));
       expect(recoveredThrown.isFailure, isTrue);
+      expect(recoveredThrown.errorOrNull, isA<CaughtError>());
     });
 
     test('tryRecoverSync passes through success', () {
@@ -168,6 +170,7 @@ void main() {
 
       expect(mapped, const Result<int, Object>.success(12));
       expect(mappedThrown.isFailure, isTrue);
+      expect(mappedThrown.errorOrNull, isA<CaughtError>());
       expect(mappedFailure, const Result<int, Object>.failure(_TestError('x')));
     });
 
@@ -185,6 +188,7 @@ void main() {
       expect(recoveredSuccess, const Result<int, Object>.success(8));
       expect(recovered, const Result<int, Object>.success(9));
       expect(recoveredThrown.isFailure, isTrue);
+      expect(recoveredThrown.errorOrNull, isA<CaughtError>());
     });
   });
 
@@ -216,7 +220,7 @@ void main() {
     test('returns success when no exception', () {
       final result = tryRunSync(() => 'ok');
 
-      expect(result, const Result<String, Object>.success('ok'));
+      expect(result, const Result<String, CaughtError>.success('ok'));
     });
 
     test('returns failure when exception is thrown', () {
@@ -225,7 +229,10 @@ void main() {
       });
 
       expect(result.isFailure, isTrue);
-      expect(result.errorOrNull, isA<StateError>());
+      final caught = result.errorOrNull;
+      expect(caught, isA<CaughtError>());
+      expect(caught!.error, isA<StateError>());
+      expect(caught.stackTrace.toString(), isNotEmpty);
     });
   });
 
@@ -233,7 +240,7 @@ void main() {
     test('returns success when no exception', () async {
       final result = await tryRun(() async => 'ok');
 
-      expect(result, const Result<String, Object>.success('ok'));
+      expect(result, const Result<String, CaughtError>.success('ok'));
     });
 
     test('returns failure when exception is thrown', () async {
@@ -243,7 +250,10 @@ void main() {
       });
 
       expect(result.isFailure, isTrue);
-      expect(result.errorOrNull, isA<StateError>());
+      final caught = result.errorOrNull;
+      expect(caught, isA<CaughtError>());
+      expect(caught!.error, isA<StateError>());
+      expect(caught.stackTrace.toString(), isNotEmpty);
     });
 
     test('returns failure when action throws synchronously', () async {
@@ -252,7 +262,10 @@ void main() {
       });
 
       expect(result.isFailure, isTrue);
-      expect(result.errorOrNull, isA<StateError>());
+      final caught = result.errorOrNull;
+      expect(caught, isA<CaughtError>());
+      expect(caught!.error, isA<StateError>());
+      expect(caught.stackTrace.toString(), isNotEmpty);
     });
 
     test('returns failure when Error is thrown', () async {
@@ -261,7 +274,108 @@ void main() {
       });
 
       expect(result.isFailure, isTrue);
-      expect(result.errorOrNull, isA<_TestPanic>());
+      final caught = result.errorOrNull;
+      expect(caught, isA<CaughtError>());
+      expect(caught!.error, isA<_TestPanic>());
+      expect(caught.stackTrace.toString(), isNotEmpty);
+    });
+  });
+
+  group('tryRunWith', () {
+    test('maps sync errors to custom type', () {
+      final result = tryRunSyncWith<String, _MappedError>(
+        () => throw StateError('oops'),
+        (error, stackTrace) => _MappedError(error, stackTrace),
+      );
+
+      expect(result.isFailure, isTrue);
+      final mapped = result.errorOrNull;
+      expect(mapped, isA<_MappedError>());
+      expect(mapped!.error, isA<StateError>());
+      expect(mapped.stackTrace.toString(), isNotEmpty);
+    });
+
+    test('maps async errors to custom type', () async {
+      final result = await tryRunWith<String, _MappedError>(
+        () async => throw _TestPanic(),
+        (error, stackTrace) => _MappedError(error, stackTrace),
+      );
+
+      expect(result.isFailure, isTrue);
+      final mapped = result.errorOrNull;
+      expect(mapped, isA<_MappedError>());
+      expect(mapped!.error, isA<_TestPanic>());
+      expect(mapped.stackTrace.toString(), isNotEmpty);
+    });
+  });
+
+  group('AsyncResultOps', () {
+    test('map and flatMap chain on Future<Result>', () async {
+      final result =
+          await Future.value(const Result<int, _TestError>.success(2))
+              .map((value) => value + 1)
+              .flatMap(
+                (value) => Result<String, _TestError>.success('v:$value'),
+              );
+
+      expect(result, const Result<String, _TestError>.success('v:3'));
+    });
+
+    test('map passes through failure without running transform', () async {
+      var called = false;
+
+      final result =
+          await Future.value(
+            const Result<int, _TestError>.failure(_TestError('x')),
+          ).map((value) {
+            called = true;
+            return value + 1;
+          });
+
+      expect(result, const Result<int, _TestError>.failure(_TestError('x')));
+      expect(called, isFalse);
+    });
+
+    test('flatMap passes through failure without running transform', () async {
+      var called = false;
+
+      final result =
+          await Future.value(
+            const Result<int, _TestError>.failure(_TestError('x')),
+          ).flatMap((value) {
+            called = true;
+            return Result<String, _TestError>.success('v:$value');
+          });
+
+      expect(result, const Result<String, _TestError>.failure(_TestError('x')));
+      expect(called, isFalse);
+    });
+
+    test('mapError and recover chain on Future<Result>', () async {
+      final result = await Future.value(
+        const Result<int, _TestError>.failure(_TestError('x')),
+      ).mapError((error) => error.message.length).recover((_) => 9);
+
+      expect(result, const Result<int, int>.success(9));
+    });
+
+    test('onSuccess and onFailure chain on Future<Result>', () async {
+      var successValue = 0;
+      String? failureMessage;
+
+      await Future.value(const Result<int, _TestError>.success(7))
+          .onSuccess((value) => successValue = value)
+          .onFailure((error) => failureMessage = error.message);
+
+      expect(successValue, 7);
+      expect(failureMessage, isNull);
+
+      await Future.value(const Result<int, _TestError>.failure(_TestError('x')))
+          .onSuccess((value) => successValue = value)
+          .onFailure((error) => failureMessage = error.message);
+
+      expect(successValue, 7);
+      expect(failureMessage, 'x');
     });
   });
 
@@ -294,6 +408,15 @@ void main() {
         'Failure(TestError(x))',
       );
     });
+
+    test('CaughtError toString is readable', () {
+      final caught = CaughtError(StateError('oops'), StackTrace.current);
+      final text = caught.toString();
+
+      expect(text, contains('CaughtError(error:'));
+      expect(text, contains('Bad state: oops'));
+      expect(text, contains('stackTrace:'));
+    });
   });
 }
 
@@ -315,3 +438,10 @@ class _TestError {
 }
 
 class _TestPanic extends Error {}
+
+class _MappedError {
+  const _MappedError(this.error, this.stackTrace);
+
+  final Object error;
+  final StackTrace stackTrace;
+}

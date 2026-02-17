@@ -6,3 +6,5 @@
 - Added extraction helpers: `getOrThrow`, `getOrElse`, `getOrDefault`, nullable accessors.
 - Added recovery/side-effect helpers: `recover`, `tryRecover`, `tryRecoverSync`, `onSuccess`, `onFailure`.
 - Added `tryRun`/`tryRunSync` helpers and unit tests.
+- Added `tryRunWith`/`tryRunSyncWith` for custom error mapping with stack traces.
+- Added `AsyncResultOps` extension for chaining on `Future<Result<...>>`.
