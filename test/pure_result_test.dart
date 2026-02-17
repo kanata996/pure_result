@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pure_result/result.dart';
+import 'package:pure_result/pure_result.dart';
 
 void main() {
   group('Result state', () {
