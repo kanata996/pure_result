@@ -142,6 +142,19 @@ void main() {
       expect(recoveredThrown.isFailure, isTrue);
     });
 
+    test('recoverCatching passes through success', () {
+      const success = Result<int, _TestError>.success(8);
+      var called = false;
+
+      final recovered = success.recoverCatching((_) {
+        called = true;
+        return 9;
+      });
+
+      expect(recovered, const Result<int, Object>.success(8));
+      expect(called, isFalse);
+    });
+
     test('mapCatchingAsync captures async thrown error', () async {
       const success = Result<int, _TestError>.success(4);
       const failure = Result<int, _TestError>.failure(_TestError('x'));
@@ -236,6 +249,24 @@ void main() {
       expect(result.isFailure, isTrue);
       expect(result.errorOrNull, isA<StateError>());
     });
+
+    test('returns failure when action throws synchronously', () async {
+      final result = await runCatchingAsync<String>(() {
+        throw StateError('sync oops');
+      });
+
+      expect(result.isFailure, isTrue);
+      expect(result.errorOrNull, isA<StateError>());
+    });
+
+    test('returns failure when Error is thrown', () async {
+      final result = await runCatchingAsync<String>(() async {
+        throw _TestPanic();
+      });
+
+      expect(result.isFailure, isTrue);
+      expect(result.errorOrNull, isA<_TestPanic>());
+    });
   });
 
   group('Result equality and toString', () {
@@ -248,6 +279,16 @@ void main() {
         const Result<int, _TestError>.failure(_TestError('x')),
         const Result<int, _TestError>.failure(_TestError('x')),
       );
+    });
+
+    test('equal results have same hashCode', () {
+      const successA = Result<int, _TestError>.success(1);
+      const successB = Result<int, _TestError>.success(1);
+      const failureA = Result<int, _TestError>.failure(_TestError('x'));
+      const failureB = Result<int, _TestError>.failure(_TestError('x'));
+
+      expect(successA.hashCode, successB.hashCode);
+      expect(failureA.hashCode, failureB.hashCode);
     });
 
     test('toString is readable', () {
@@ -276,3 +317,5 @@ class _TestError {
   @override
   String toString() => 'TestError($message)';
 }
+
+class _TestPanic extends Error {}
