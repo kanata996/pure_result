@@ -48,24 +48,4 @@ extension AsyncResultOps<T, E extends Object> on Future<Result<T, E>> {
       Failure(error: final error) => Result.success(await transform(error)),
     };
   }
-
-  Future<Result<T, E>> onSuccess(
-    FutureOr<void> Function(T value) action,
-  ) async {
-    final result = await this;
-    if (result case Success(value: final value)) {
-      await action(value);
-    }
-    return result;
-  }
-
-  Future<Result<T, E>> onFailure(
-    FutureOr<void> Function(E error) action,
-  ) async {
-    final result = await this;
-    if (result case Failure(error: final error)) {
-      await action(error);
-    }
-    return result;
-  }
 }

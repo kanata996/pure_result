@@ -35,10 +35,6 @@ sealed class Result<T, E extends Object> {
     return fold((value) => value, onFailure);
   }
 
-  T getOrDefault(T defaultValue) {
-    return fold((value) => value, (_) => defaultValue);
-  }
-
   T getOrThrow() {
     return switch (this) {
       Success(value: final value) => value,
@@ -81,20 +77,6 @@ sealed class Result<T, E extends Object> {
       Success() => this,
       Failure(error: final error) => Result.success(transform(error)),
     };
-  }
-
-  Result<T, E> onSuccess(void Function(T value) action) {
-    if (this case Success(value: final value)) {
-      action(value);
-    }
-    return this;
-  }
-
-  Result<T, E> onFailure(void Function(E error) action) {
-    if (this case Failure(error: final error)) {
-      action(error);
-    }
-    return this;
   }
 }
 

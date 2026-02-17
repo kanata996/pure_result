@@ -54,35 +54,11 @@ Result<T, CaughtError> tryRunSync<T>(T Function() action) {
   }
 }
 
-/// Runs [action] and maps thrown exceptions/errors to a custom error type.
-Result<T, F> tryRunSyncWith<T, F extends Object>(
-  T Function() action,
-  F Function(Object error, StackTrace stackTrace) mapError,
-) {
-  try {
-    return Result.success(action());
-  } catch (error, stackTrace) {
-    return Result.failure(mapError(error, stackTrace));
-  }
-}
-
 /// Runs async [action] and captures thrown exceptions/errors as [CaughtError].
 Future<Result<T, CaughtError>> tryRun<T>(Future<T> Function() action) async {
   try {
     return Result.success(await action());
   } catch (error, stackTrace) {
     return Result.failure(CaughtError(error, stackTrace));
-  }
-}
-
-/// Runs async [action] and maps thrown exceptions/errors to a custom error type.
-Future<Result<T, F>> tryRunWith<T, F extends Object>(
-  Future<T> Function() action,
-  F Function(Object error, StackTrace stackTrace) mapError,
-) async {
-  try {
-    return Result.success(await action());
-  } catch (error, stackTrace) {
-    return Result.failure(mapError(error, stackTrace));
   }
 }

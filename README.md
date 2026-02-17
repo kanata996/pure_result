@@ -5,18 +5,20 @@ A lightweight `Result` type for Dart/Flutter inspired by Kotlin and Swift.
 ## Features
 
 - Dart 3 `sealed class` based API.
-- Strongly typed success and failure branches: `Result<T, E>`.
+- Core API export (`package:pure_result/pure_result.dart`) with `Result<T, E>` and `try_*` helpers.
 - Functional transforms: `map`, `flatMap`, `mapError`, `flatMapError`.
-- Recovery and side-effects: `recover`, `tryRecover`, `tryRecoverSync`, `onSuccess`, `onFailure`.
-- Utility helpers: `fold`, `getOrThrow`, `getOrElse`, `getOrDefault`, `tryRun`, `tryRunSync`.
-- Custom error mapping for thrown exceptions/errors: `tryRunWith`, `tryRunSyncWith`.
-- Async chain support on `Future<Result<...>>` via `AsyncResultOps`: `map`, `flatMap`, `mapError`, `flatMapError`, `recover`, `onSuccess`, `onFailure`.
-- Exception-safe async chain support on `Future<Result<...>>` via `TryAsyncResultOps`: `tryMap`, `tryFlatMap`, `tryMapError`, `tryFlatMapError`, `tryRecover`, `tryOnSuccess`, `tryOnFailure`.
+- Recovery helpers: `recover`, `tryRecover`, `tryRecoverSync`.
+- Utility helpers: `fold`, `getOrThrow`, `getOrElse`, `tryRun`, `tryRunSync`.
+- Async chain support on `Future<Result<...>>` via `AsyncResultOps`: `map`, `flatMap`, `mapError`, `flatMapError`, `recover`.
+
+Optional module imports:
+- `package:pure_result/async_result.dart` for `AsyncResultOps`.
 
 ## Usage
 
 ```dart
 import 'package:pure_result/pure_result.dart';
+import 'package:pure_result/async_result.dart';
 
 Result<int, String> parsePort(String raw) {
   final value = int.tryParse(raw);
@@ -27,10 +29,7 @@ Result<int, String> parsePort(String raw) {
 }
 
 void main() {
-  final result = parsePort('8080')
-      .map((port) => port + 1)
-      .onSuccess((value) => print('next port: $value'))
-      .onFailure((error) => print('error: $error'));
+  final result = parsePort('8080').map((port) => port + 1);
 
   final display = result.fold(
     (value) => 'OK($value)',

@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pure_result/async_result.dart';
 import 'package:pure_result/pure_result.dart';
 
 void main() {
@@ -41,14 +42,12 @@ void main() {
       expect(failureText, 'err:x');
     });
 
-    test('getOrElse and getOrDefault', () {
+    test('getOrElse', () {
       const success = Result<int, _TestError>.success(10);
       const failure = Result<int, _TestError>.failure(_TestError('x'));
 
       expect(success.getOrElse((_) => -1), 10);
       expect(failure.getOrElse((_) => -1), -1);
-      expect(success.getOrDefault(99), 10);
-      expect(failure.getOrDefault(99), 99);
     });
 
     test('getOrThrow returns value or throws', () {
@@ -192,30 +191,6 @@ void main() {
     });
   });
 
-  group('Result side effects', () {
-    test('onSuccess and onFailure', () {
-      const success = Result<int, _TestError>.success(11);
-      const failure = Result<int, _TestError>.failure(_TestError('x'));
-
-      var successValue = 0;
-      String? failureMessage;
-
-      success
-          .onSuccess((value) => successValue = value)
-          .onFailure((error) => failureMessage = error.message);
-
-      expect(successValue, 11);
-      expect(failureMessage, isNull);
-
-      failure
-          .onSuccess((value) => successValue = value)
-          .onFailure((error) => failureMessage = error.message);
-
-      expect(successValue, 11);
-      expect(failureMessage, 'x');
-    });
-  });
-
   group('tryRunSync', () {
     test('returns success when no exception', () {
       final result = tryRunSync(() => 'ok');
@@ -278,34 +253,6 @@ void main() {
       expect(caught, isA<CaughtError>());
       expect(caught!.error, isA<_TestPanic>());
       expect(caught.stackTrace.toString(), isNotEmpty);
-    });
-  });
-
-  group('tryRunWith', () {
-    test('maps sync errors to custom type', () {
-      final result = tryRunSyncWith<String, _MappedError>(
-        () => throw StateError('oops'),
-        (error, stackTrace) => _MappedError(error, stackTrace),
-      );
-
-      expect(result.isFailure, isTrue);
-      final mapped = result.errorOrNull;
-      expect(mapped, isA<_MappedError>());
-      expect(mapped!.error, isA<StateError>());
-      expect(mapped.stackTrace.toString(), isNotEmpty);
-    });
-
-    test('maps async errors to custom type', () async {
-      final result = await tryRunWith<String, _MappedError>(
-        () async => throw _TestPanic(),
-        (error, stackTrace) => _MappedError(error, stackTrace),
-      );
-
-      expect(result.isFailure, isTrue);
-      final mapped = result.errorOrNull;
-      expect(mapped, isA<_MappedError>());
-      expect(mapped!.error, isA<_TestPanic>());
-      expect(mapped.stackTrace.toString(), isNotEmpty);
     });
   });
 
@@ -435,248 +382,6 @@ void main() {
 
       await expectLater(future, throwsA(isA<StateError>()));
     });
-
-    test('onSuccess propagates exceptions from action', () async {
-      final future = Future.value(const Result<int, _TestError>.success(1))
-          .onSuccess((_) {
-            throw StateError('onSuccess explode');
-          });
-
-      await expectLater(future, throwsA(isA<StateError>()));
-    });
-
-    test('onFailure propagates exceptions from action', () async {
-      final future =
-          Future.value(
-            const Result<int, _TestError>.failure(_TestError('x')),
-          ).onFailure((_) {
-            throw StateError('onFailure explode');
-          });
-
-      await expectLater(future, throwsA(isA<StateError>()));
-    });
-
-    test('onSuccess and onFailure chain on Future<Result>', () async {
-      var successValue = 0;
-      String? failureMessage;
-
-      await Future.value(const Result<int, _TestError>.success(7))
-          .onSuccess((value) => successValue = value)
-          .onFailure((error) => failureMessage = error.message);
-
-      expect(successValue, 7);
-      expect(failureMessage, isNull);
-
-      await Future.value(const Result<int, _TestError>.failure(_TestError('x')))
-          .onSuccess((value) => successValue = value)
-          .onFailure((error) => failureMessage = error.message);
-
-      expect(successValue, 7);
-      expect(failureMessage, 'x');
-    });
-  });
-
-  group('TryAsyncResultOps', () {
-    test(
-      'tryMap maps success, passes through failure, captures thrown error',
-      () async {
-        final mapped = await Future.value(
-          const Result<int, _TestError>.success(2),
-        ).tryMap((value) => value + 1);
-        expect(mapped, const Result<int, Object>.success(3));
-
-        var called = false;
-        final passed =
-            await Future.value(
-              const Result<int, _TestError>.failure(_TestError('x')),
-            ).tryMap((value) {
-              called = true;
-              return value + 1;
-            });
-        expect(passed, const Result<int, Object>.failure(_TestError('x')));
-        expect(called, isFalse);
-
-        final thrown = await Future.value(
-          const Result<int, _TestError>.success(2),
-        ).tryMap<int>((_) => throw StateError('tryMap explode'));
-        expect(thrown.isFailure, isTrue);
-        final caught = thrown.errorOrNull;
-        expect(caught, isA<CaughtError>());
-        expect((caught as CaughtError).error, isA<StateError>());
-      },
-    );
-
-    test(
-      'tryFlatMap transforms success, passes through failure, captures thrown error',
-      () async {
-        final mapped = await Future.value(
-          const Result<int, _TestError>.success(2),
-        ).tryFlatMap((value) => Result<String, _TestError>.success('v:$value'));
-        expect(mapped, const Result<String, Object>.success('v:2'));
-
-        var called = false;
-        final passed =
-            await Future.value(
-              const Result<int, _TestError>.failure(_TestError('x')),
-            ).tryFlatMap((value) {
-              called = true;
-              return Result<String, _TestError>.success('v:$value');
-            });
-        expect(passed, const Result<String, Object>.failure(_TestError('x')));
-        expect(called, isFalse);
-
-        final thrown = await Future.value(
-          const Result<int, _TestError>.success(2),
-        ).tryFlatMap<String>((_) => throw StateError('tryFlatMap explode'));
-        expect(thrown.isFailure, isTrue);
-        final caught = thrown.errorOrNull;
-        expect(caught, isA<CaughtError>());
-        expect((caught as CaughtError).error, isA<StateError>());
-      },
-    );
-
-    test(
-      'tryMapError transforms failure, passes through success, captures thrown error',
-      () async {
-        final mapped = await Future.value(
-          const Result<int, _TestError>.failure(_TestError('xyz')),
-        ).tryMapError((error) => error.message.length);
-        expect(mapped, const Result<int, Object>.failure(3));
-
-        var called = false;
-        final passed =
-            await Future.value(
-              const Result<int, _TestError>.success(7),
-            ).tryMapError((error) {
-              called = true;
-              return error.message.length;
-            });
-        expect(passed, const Result<int, Object>.success(7));
-        expect(called, isFalse);
-
-        final thrown = await Future.value(
-          const Result<int, _TestError>.failure(_TestError('x')),
-        ).tryMapError<int>((_) => throw StateError('tryMapError explode'));
-        expect(thrown.isFailure, isTrue);
-        final caught = thrown.errorOrNull;
-        expect(caught, isA<CaughtError>());
-        expect((caught as CaughtError).error, isA<StateError>());
-      },
-    );
-
-    test(
-      'tryFlatMapError transforms failure, passes through success, captures thrown error',
-      () async {
-        final mapped =
-            await Future.value(
-              const Result<int, _TestError>.failure(_TestError('xyz')),
-            ).tryFlatMapError(
-              (error) => Result<int, int>.failure(error.message.length),
-            );
-        expect(mapped, const Result<int, Object>.failure(3));
-
-        var called = false;
-        final passed =
-            await Future.value(
-              const Result<int, _TestError>.success(7),
-            ).tryFlatMapError((error) {
-              called = true;
-              return Result<int, int>.failure(error.message.length);
-            });
-        expect(passed, const Result<int, Object>.success(7));
-        expect(called, isFalse);
-
-        final thrown =
-            await Future.value(
-              const Result<int, _TestError>.failure(_TestError('x')),
-            ).tryFlatMapError<int>(
-              (_) => throw StateError('tryFlatMapError explode'),
-            );
-        expect(thrown.isFailure, isTrue);
-        final caught = thrown.errorOrNull;
-        expect(caught, isA<CaughtError>());
-        expect((caught as CaughtError).error, isA<StateError>());
-      },
-    );
-
-    test(
-      'tryRecover recovers failure, passes through success, captures thrown error',
-      () async {
-        final recovered = await Future.value(
-          const Result<int, _TestError>.failure(_TestError('x')),
-        ).tryRecover((_) => 9);
-        expect(recovered, const Result<int, Object>.success(9));
-
-        var called = false;
-        final passed =
-            await Future.value(
-              const Result<int, _TestError>.success(7),
-            ).tryRecover((error) {
-              called = true;
-              return error.message.length;
-            });
-        expect(passed, const Result<int, Object>.success(7));
-        expect(called, isFalse);
-
-        final thrown = await Future.value(
-          const Result<int, _TestError>.failure(_TestError('x')),
-        ).tryRecover((_) => throw StateError('tryRecover explode'));
-        expect(thrown.isFailure, isTrue);
-        final caught = thrown.errorOrNull;
-        expect(caught, isA<CaughtError>());
-        expect((caught as CaughtError).error, isA<StateError>());
-      },
-    );
-
-    test(
-      'tryOnSuccess and tryOnFailure run branch action and capture thrown errors',
-      () async {
-        var successValue = 0;
-        String? failureMessage;
-
-        final successResult = await Future.value(
-          const Result<int, _TestError>.success(7),
-        ).tryOnSuccess((value) => successValue = value);
-        expect(successResult, const Result<int, Object>.success(7));
-        expect(successValue, 7);
-
-        final failureResult = await Future.value(
-          const Result<int, _TestError>.failure(_TestError('x')),
-        ).tryOnFailure((error) => failureMessage = error.message);
-        expect(
-          failureResult,
-          const Result<int, Object>.failure(_TestError('x')),
-        );
-        expect(failureMessage, 'x');
-
-        final successThrown = await Future.value(
-          const Result<int, _TestError>.success(1),
-        ).tryOnSuccess((_) => throw StateError('tryOnSuccess explode'));
-        expect(successThrown.isFailure, isTrue);
-        final successCaught = successThrown.errorOrNull;
-        expect(successCaught, isA<CaughtError>());
-        expect((successCaught as CaughtError).error, isA<StateError>());
-
-        final failureThrown = await Future.value(
-          const Result<int, _TestError>.failure(_TestError('x')),
-        ).tryOnFailure((_) => throw StateError('tryOnFailure explode'));
-        expect(failureThrown.isFailure, isTrue);
-        final failureCaught = failureThrown.errorOrNull;
-        expect(failureCaught, isA<CaughtError>());
-        expect((failureCaught as CaughtError).error, isA<StateError>());
-      },
-    );
-
-    test('captures upstream Future exception as failure', () async {
-      final result = await Future<Result<int, _TestError>>.error(
-        StateError('upstream explode'),
-      ).tryMap((value) => value + 1);
-
-      expect(result.isFailure, isTrue);
-      final caught = result.errorOrNull;
-      expect(caught, isA<CaughtError>());
-      expect((caught as CaughtError).error, isA<StateError>());
-    });
   });
 
   group('Result equality and toString', () {
@@ -738,10 +443,3 @@ class _TestError {
 }
 
 class _TestPanic extends Error {}
-
-class _MappedError {
-  const _MappedError(this.error, this.stackTrace);
-
-  final Object error;
-  final StackTrace stackTrace;
-}
