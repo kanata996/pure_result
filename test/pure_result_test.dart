@@ -141,6 +141,42 @@ void main() {
       expect(recovered, const Result<int, Object>.success(9));
       expect(recoveredThrown.isFailure, isTrue);
     });
+
+    test('mapCatchingAsync captures async thrown error', () async {
+      const success = Result<int, _TestError>.success(4);
+      const failure = Result<int, _TestError>.failure(_TestError('x'));
+
+      final mapped = await success.mapCatchingAsync((value) async => value * 3);
+      final mappedThrown = await success.mapCatchingAsync<int>((_) async {
+        await Future<void>.delayed(Duration.zero);
+        throw StateError('explode');
+      });
+      final mappedFailure = await failure.mapCatchingAsync(
+        (value) async => value * 3,
+      );
+
+      expect(mapped, const Result<int, Object>.success(12));
+      expect(mappedThrown.isFailure, isTrue);
+      expect(mappedFailure, const Result<int, Object>.failure(_TestError('x')));
+    });
+
+    test('recoverCatchingAsync captures async thrown error', () async {
+      const success = Result<int, _TestError>.success(8);
+      const failure = Result<int, _TestError>.failure(_TestError('x'));
+
+      final recoveredSuccess = await success.recoverCatchingAsync(
+        (_) async => 9,
+      );
+      final recovered = await failure.recoverCatchingAsync((_) async => 9);
+      final recoveredThrown = await failure.recoverCatchingAsync((_) async {
+        await Future<void>.delayed(Duration.zero);
+        throw StateError('explode');
+      });
+
+      expect(recoveredSuccess, const Result<int, Object>.success(8));
+      expect(recovered, const Result<int, Object>.success(9));
+      expect(recoveredThrown.isFailure, isTrue);
+    });
   });
 
   group('Result side effects', () {
@@ -176,6 +212,24 @@ void main() {
 
     test('returns failure when exception is thrown', () {
       final result = runCatching<String>(() {
+        throw StateError('oops');
+      });
+
+      expect(result.isFailure, isTrue);
+      expect(result.errorOrNull, isA<StateError>());
+    });
+  });
+
+  group('runCatchingAsync', () {
+    test('returns success when no exception', () async {
+      final result = await runCatchingAsync(() async => 'ok');
+
+      expect(result, const Result<String, Object>.success('ok'));
+    });
+
+    test('returns failure when exception is thrown', () async {
+      final result = await runCatchingAsync<String>(() async {
+        await Future<void>.delayed(Duration.zero);
         throw StateError('oops');
       });
 

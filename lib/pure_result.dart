@@ -83,6 +83,15 @@ sealed class Result<T, E extends Object> {
     };
   }
 
+  Future<Result<R, Object>> mapCatchingAsync<R>(
+    Future<R> Function(T value) transform,
+  ) async {
+    return switch (this) {
+      Success(value: final value) => runCatchingAsync(() => transform(value)),
+      Failure(error: final error) => Result.failure(error),
+    };
+  }
+
   Result<T, E> recover(T Function(E error) transform) {
     return switch (this) {
       Success() => this,
@@ -94,6 +103,15 @@ sealed class Result<T, E extends Object> {
     return switch (this) {
       Success(value: final value) => Result.success(value),
       Failure(error: final error) => runCatching(() => transform(error)),
+    };
+  }
+
+  Future<Result<T, Object>> recoverCatchingAsync(
+    Future<T> Function(E error) transform,
+  ) async {
+    return switch (this) {
+      Success(value: final value) => Result.success(value),
+      Failure(error: final error) => runCatchingAsync(() => transform(error)),
     };
   }
 
@@ -150,6 +168,17 @@ final class Failure<T, E extends Object> extends Result<T, E> {
 Result<T, Object> runCatching<T>(T Function() action) {
   try {
     return Result.success(action());
+  } catch (error) {
+    return Result.failure(error);
+  }
+}
+
+/// Runs async [action] and captures thrown exceptions or errors as `Failure`.
+Future<Result<T, Object>> runCatchingAsync<T>(
+  Future<T> Function() action,
+) async {
+  try {
+    return Result.success(await action());
   } catch (error) {
     return Result.failure(error);
   }
