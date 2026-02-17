@@ -31,6 +31,16 @@ extension AsyncResultOps<T, E extends Object> on Future<Result<T, E>> {
     };
   }
 
+  Future<Result<T, F>> flatMapError<F extends Object>(
+    FutureOr<Result<T, F>> Function(E error) transform,
+  ) async {
+    final result = await this;
+    return switch (result) {
+      Success(value: final value) => Result.success(value),
+      Failure(error: final error) => await transform(error),
+    };
+  }
+
   Future<Result<T, E>> recover(FutureOr<T> Function(E error) transform) async {
     final result = await this;
     return switch (result) {

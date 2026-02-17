@@ -10,7 +10,8 @@ A lightweight `Result` type for Dart/Flutter inspired by Kotlin and Swift.
 - Recovery and side-effects: `recover`, `tryRecover`, `tryRecoverSync`, `onSuccess`, `onFailure`.
 - Utility helpers: `fold`, `getOrThrow`, `getOrElse`, `getOrDefault`, `tryRun`, `tryRunSync`.
 - Custom error mapping for thrown exceptions/errors: `tryRunWith`, `tryRunSyncWith`.
-- Async chain support on `Future<Result<...>>` via `AsyncResultOps`: `map`, `flatMap`, `mapError`, `recover`, `onSuccess`, `onFailure`.
+- Async chain support on `Future<Result<...>>` via `AsyncResultOps`: `map`, `flatMap`, `mapError`, `flatMapError`, `recover`, `onSuccess`, `onFailure`.
+- Exception-safe async chain support on `Future<Result<...>>` via `TryAsyncResultOps`: `tryMap`, `tryFlatMap`, `tryMapError`, `tryFlatMapError`, `tryRecover`, `tryOnSuccess`, `tryOnFailure`.
 
 ## Usage
 

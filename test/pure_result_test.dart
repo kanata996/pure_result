@@ -359,6 +359,103 @@ void main() {
       expect(result, const Result<int, int>.success(9));
     });
 
+    test('flatMapError transforms failure on Future<Result>', () async {
+      final result = await Future.value(
+        const Result<int, _TestError>.failure(_TestError('xyz')),
+      ).flatMapError((error) => Result<int, int>.failure(error.message.length));
+
+      expect(result, const Result<int, int>.failure(3));
+    });
+
+    test(
+      'flatMapError passes through success without running transform',
+      () async {
+        var called = false;
+
+        final result =
+            await Future.value(
+              const Result<int, _TestError>.success(7),
+            ).flatMapError((error) {
+              called = true;
+              return Result<int, int>.failure(error.message.length);
+            });
+
+        expect(result, const Result<int, int>.success(7));
+        expect(called, isFalse);
+      },
+    );
+
+    test('map propagates exceptions from transform', () async {
+      final future = Future.value(const Result<int, _TestError>.success(1))
+          .map<int>((_) {
+            throw StateError('map explode');
+          });
+
+      await expectLater(future, throwsA(isA<StateError>()));
+    });
+
+    test('flatMap propagates exceptions from transform', () async {
+      final future = Future.value(const Result<int, _TestError>.success(1))
+          .flatMap<int>((_) {
+            throw StateError('flatMap explode');
+          });
+
+      await expectLater(future, throwsA(isA<StateError>()));
+    });
+
+    test('mapError propagates exceptions from transform', () async {
+      final future =
+          Future.value(
+            const Result<int, _TestError>.failure(_TestError('x')),
+          ).mapError<int>((_) {
+            throw StateError('mapError explode');
+          });
+
+      await expectLater(future, throwsA(isA<StateError>()));
+    });
+
+    test('flatMapError propagates exceptions from transform', () async {
+      final future =
+          Future.value(
+            const Result<int, _TestError>.failure(_TestError('x')),
+          ).flatMapError<int>((_) {
+            throw StateError('flatMapError explode');
+          });
+
+      await expectLater(future, throwsA(isA<StateError>()));
+    });
+
+    test('recover propagates exceptions from transform', () async {
+      final future =
+          Future.value(
+            const Result<int, _TestError>.failure(_TestError('x')),
+          ).recover((_) {
+            throw StateError('recover explode');
+          });
+
+      await expectLater(future, throwsA(isA<StateError>()));
+    });
+
+    test('onSuccess propagates exceptions from action', () async {
+      final future = Future.value(const Result<int, _TestError>.success(1))
+          .onSuccess((_) {
+            throw StateError('onSuccess explode');
+          });
+
+      await expectLater(future, throwsA(isA<StateError>()));
+    });
+
+    test('onFailure propagates exceptions from action', () async {
+      final future =
+          Future.value(
+            const Result<int, _TestError>.failure(_TestError('x')),
+          ).onFailure((_) {
+            throw StateError('onFailure explode');
+          });
+
+      await expectLater(future, throwsA(isA<StateError>()));
+    });
+
     test('onSuccess and onFailure chain on Future<Result>', () async {
       var successValue = 0;
       String? failureMessage;
@@ -376,6 +473,209 @@ void main() {
 
       expect(successValue, 7);
       expect(failureMessage, 'x');
+    });
+  });
+
+  group('TryAsyncResultOps', () {
+    test(
+      'tryMap maps success, passes through failure, captures thrown error',
+      () async {
+        final mapped = await Future.value(
+          const Result<int, _TestError>.success(2),
+        ).tryMap((value) => value + 1);
+        expect(mapped, const Result<int, Object>.success(3));
+
+        var called = false;
+        final passed =
+            await Future.value(
+              const Result<int, _TestError>.failure(_TestError('x')),
+            ).tryMap((value) {
+              called = true;
+              return value + 1;
+            });
+        expect(passed, const Result<int, Object>.failure(_TestError('x')));
+        expect(called, isFalse);
+
+        final thrown = await Future.value(
+          const Result<int, _TestError>.success(2),
+        ).tryMap<int>((_) => throw StateError('tryMap explode'));
+        expect(thrown.isFailure, isTrue);
+        final caught = thrown.errorOrNull;
+        expect(caught, isA<CaughtError>());
+        expect((caught as CaughtError).error, isA<StateError>());
+      },
+    );
+
+    test(
+      'tryFlatMap transforms success, passes through failure, captures thrown error',
+      () async {
+        final mapped = await Future.value(
+          const Result<int, _TestError>.success(2),
+        ).tryFlatMap((value) => Result<String, _TestError>.success('v:$value'));
+        expect(mapped, const Result<String, Object>.success('v:2'));
+
+        var called = false;
+        final passed =
+            await Future.value(
+              const Result<int, _TestError>.failure(_TestError('x')),
+            ).tryFlatMap((value) {
+              called = true;
+              return Result<String, _TestError>.success('v:$value');
+            });
+        expect(passed, const Result<String, Object>.failure(_TestError('x')));
+        expect(called, isFalse);
+
+        final thrown = await Future.value(
+          const Result<int, _TestError>.success(2),
+        ).tryFlatMap<String>((_) => throw StateError('tryFlatMap explode'));
+        expect(thrown.isFailure, isTrue);
+        final caught = thrown.errorOrNull;
+        expect(caught, isA<CaughtError>());
+        expect((caught as CaughtError).error, isA<StateError>());
+      },
+    );
+
+    test(
+      'tryMapError transforms failure, passes through success, captures thrown error',
+      () async {
+        final mapped = await Future.value(
+          const Result<int, _TestError>.failure(_TestError('xyz')),
+        ).tryMapError((error) => error.message.length);
+        expect(mapped, const Result<int, Object>.failure(3));
+
+        var called = false;
+        final passed =
+            await Future.value(
+              const Result<int, _TestError>.success(7),
+            ).tryMapError((error) {
+              called = true;
+              return error.message.length;
+            });
+        expect(passed, const Result<int, Object>.success(7));
+        expect(called, isFalse);
+
+        final thrown = await Future.value(
+          const Result<int, _TestError>.failure(_TestError('x')),
+        ).tryMapError<int>((_) => throw StateError('tryMapError explode'));
+        expect(thrown.isFailure, isTrue);
+        final caught = thrown.errorOrNull;
+        expect(caught, isA<CaughtError>());
+        expect((caught as CaughtError).error, isA<StateError>());
+      },
+    );
+
+    test(
+      'tryFlatMapError transforms failure, passes through success, captures thrown error',
+      () async {
+        final mapped =
+            await Future.value(
+              const Result<int, _TestError>.failure(_TestError('xyz')),
+            ).tryFlatMapError(
+              (error) => Result<int, int>.failure(error.message.length),
+            );
+        expect(mapped, const Result<int, Object>.failure(3));
+
+        var called = false;
+        final passed =
+            await Future.value(
+              const Result<int, _TestError>.success(7),
+            ).tryFlatMapError((error) {
+              called = true;
+              return Result<int, int>.failure(error.message.length);
+            });
+        expect(passed, const Result<int, Object>.success(7));
+        expect(called, isFalse);
+
+        final thrown =
+            await Future.value(
+              const Result<int, _TestError>.failure(_TestError('x')),
+            ).tryFlatMapError<int>(
+              (_) => throw StateError('tryFlatMapError explode'),
+            );
+        expect(thrown.isFailure, isTrue);
+        final caught = thrown.errorOrNull;
+        expect(caught, isA<CaughtError>());
+        expect((caught as CaughtError).error, isA<StateError>());
+      },
+    );
+
+    test(
+      'tryRecover recovers failure, passes through success, captures thrown error',
+      () async {
+        final recovered = await Future.value(
+          const Result<int, _TestError>.failure(_TestError('x')),
+        ).tryRecover((_) => 9);
+        expect(recovered, const Result<int, Object>.success(9));
+
+        var called = false;
+        final passed =
+            await Future.value(
+              const Result<int, _TestError>.success(7),
+            ).tryRecover((error) {
+              called = true;
+              return error.message.length;
+            });
+        expect(passed, const Result<int, Object>.success(7));
+        expect(called, isFalse);
+
+        final thrown = await Future.value(
+          const Result<int, _TestError>.failure(_TestError('x')),
+        ).tryRecover((_) => throw StateError('tryRecover explode'));
+        expect(thrown.isFailure, isTrue);
+        final caught = thrown.errorOrNull;
+        expect(caught, isA<CaughtError>());
+        expect((caught as CaughtError).error, isA<StateError>());
+      },
+    );
+
+    test(
+      'tryOnSuccess and tryOnFailure run branch action and capture thrown errors',
+      () async {
+        var successValue = 0;
+        String? failureMessage;
+
+        final successResult = await Future.value(
+          const Result<int, _TestError>.success(7),
+        ).tryOnSuccess((value) => successValue = value);
+        expect(successResult, const Result<int, Object>.success(7));
+        expect(successValue, 7);
+
+        final failureResult = await Future.value(
+          const Result<int, _TestError>.failure(_TestError('x')),
+        ).tryOnFailure((error) => failureMessage = error.message);
+        expect(
+          failureResult,
+          const Result<int, Object>.failure(_TestError('x')),
+        );
+        expect(failureMessage, 'x');
+
+        final successThrown = await Future.value(
+          const Result<int, _TestError>.success(1),
+        ).tryOnSuccess((_) => throw StateError('tryOnSuccess explode'));
+        expect(successThrown.isFailure, isTrue);
+        final successCaught = successThrown.errorOrNull;
+        expect(successCaught, isA<CaughtError>());
+        expect((successCaught as CaughtError).error, isA<StateError>());
+
+        final failureThrown = await Future.value(
+          const Result<int, _TestError>.failure(_TestError('x')),
+        ).tryOnFailure((_) => throw StateError('tryOnFailure explode'));
+        expect(failureThrown.isFailure, isTrue);
+        final failureCaught = failureThrown.errorOrNull;
+        expect(failureCaught, isA<CaughtError>());
+        expect((failureCaught as CaughtError).error, isA<StateError>());
+      },
+    );
+
+    test('captures upstream Future exception as failure', () async {
+      final result = await Future<Result<int, _TestError>>.error(
+        StateError('upstream explode'),
+      ).tryMap((value) => value + 1);
+
+      expect(result.isFailure, isTrue);
+      final caught = result.errorOrNull;
+      expect(caught, isA<CaughtError>());
+      expect((caught as CaughtError).error, isA<StateError>());
     });
   });
 
