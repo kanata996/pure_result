@@ -76,18 +76,18 @@ sealed class Result<T, E extends Object> {
     };
   }
 
-  Result<R, Object> mapCatching<R>(R Function(T value) transform) {
+  Result<R, Object> tryMapSync<R>(R Function(T value) transform) {
     return switch (this) {
-      Success(value: final value) => runCatching(() => transform(value)),
+      Success(value: final value) => tryRunSync(() => transform(value)),
       Failure(error: final error) => Result.failure(error),
     };
   }
 
-  Future<Result<R, Object>> mapCatchingAsync<R>(
+  Future<Result<R, Object>> tryMap<R>(
     Future<R> Function(T value) transform,
   ) async {
     return switch (this) {
-      Success(value: final value) => runCatchingAsync(() => transform(value)),
+      Success(value: final value) => tryRun(() => transform(value)),
       Failure(error: final error) => Result.failure(error),
     };
   }
@@ -99,19 +99,19 @@ sealed class Result<T, E extends Object> {
     };
   }
 
-  Result<T, Object> recoverCatching(T Function(E error) transform) {
+  Result<T, Object> tryRecoverSync(T Function(E error) transform) {
     return switch (this) {
       Success(value: final value) => Result.success(value),
-      Failure(error: final error) => runCatching(() => transform(error)),
+      Failure(error: final error) => tryRunSync(() => transform(error)),
     };
   }
 
-  Future<Result<T, Object>> recoverCatchingAsync(
+  Future<Result<T, Object>> tryRecover(
     Future<T> Function(E error) transform,
   ) async {
     return switch (this) {
       Success(value: final value) => Result.success(value),
-      Failure(error: final error) => runCatchingAsync(() => transform(error)),
+      Failure(error: final error) => tryRun(() => transform(error)),
     };
   }
 
@@ -165,7 +165,7 @@ final class Failure<T, E extends Object> extends Result<T, E> {
 }
 
 /// Runs [action] and captures thrown exceptions or errors as `Failure`.
-Result<T, Object> runCatching<T>(T Function() action) {
+Result<T, Object> tryRunSync<T>(T Function() action) {
   try {
     return Result.success(action());
   } catch (error) {
@@ -174,9 +174,7 @@ Result<T, Object> runCatching<T>(T Function() action) {
 }
 
 /// Runs async [action] and captures thrown exceptions or errors as `Failure`.
-Future<Result<T, Object>> runCatchingAsync<T>(
-  Future<T> Function() action,
-) async {
+Future<Result<T, Object>> tryRun<T>(Future<T> Function() action) async {
   try {
     return Result.success(await action());
   } catch (error) {

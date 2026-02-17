@@ -7,8 +7,8 @@ A lightweight `Result` type for Dart/Flutter inspired by Kotlin and Swift.
 - Dart 3 `sealed class` based API.
 - Strongly typed success and failure branches: `Result<T, E>`.
 - Functional transforms: `map`, `flatMap`, `mapError`, `flatMapError`.
-- Recovery and side-effects: `recover`, `recoverCatching`, `onSuccess`, `onFailure`.
-- Utility helpers: `fold`, `getOrThrow`, `getOrElse`, `getOrDefault`, `runCatching`.
+- Recovery and side-effects: `recover`, `tryRecover`, `tryRecoverSync`, `onSuccess`, `onFailure`.
+- Utility helpers: `fold`, `getOrThrow`, `getOrElse`, `getOrDefault`, `tryRun`, `tryRunSync`.
 
 ## Usage
 

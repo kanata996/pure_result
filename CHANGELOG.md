@@ -4,5 +4,5 @@
 - Added `Success`/`Failure` variants and factory constructors.
 - Added functional operators: `fold`, `map`, `flatMap`, `mapError`, `flatMapError`.
 - Added extraction helpers: `getOrThrow`, `getOrElse`, `getOrDefault`, nullable accessors.
-- Added recovery/side-effect helpers: `recover`, `recoverCatching`, `onSuccess`, `onFailure`.
-- Added `runCatching` helper and unit tests.
+- Added recovery/side-effect helpers: `recover`, `tryRecover`, `tryRecoverSync`, `onSuccess`, `onFailure`.
+- Added `tryRun`/`tryRunSync` helpers and unit tests.

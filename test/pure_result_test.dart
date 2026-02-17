@@ -115,26 +115,26 @@ void main() {
       );
     });
 
-    test('mapCatching captures thrown error', () {
+    test('tryMapSync captures thrown error', () {
       const success = Result<int, _TestError>.success(4);
       const failure = Result<int, _TestError>.failure(_TestError('x'));
 
-      final mapped = success.mapCatching((value) => value * 3);
-      final mappedThrown = success.mapCatching<int>((_) {
+      final mapped = success.tryMapSync((value) => value * 3);
+      final mappedThrown = success.tryMapSync<int>((_) {
         throw StateError('explode');
       });
-      final mappedFailure = failure.mapCatching((value) => value * 3);
+      final mappedFailure = failure.tryMapSync((value) => value * 3);
 
       expect(mapped, const Result<int, Object>.success(12));
       expect(mappedThrown.isFailure, isTrue);
       expect(mappedFailure, const Result<int, Object>.failure(_TestError('x')));
     });
 
-    test('recoverCatching captures thrown error', () {
+    test('tryRecoverSync captures thrown error', () {
       const failure = Result<int, _TestError>.failure(_TestError('x'));
 
-      final recovered = failure.recoverCatching((_) => 9);
-      final recoveredThrown = failure.recoverCatching((_) {
+      final recovered = failure.tryRecoverSync((_) => 9);
+      final recoveredThrown = failure.tryRecoverSync((_) {
         throw StateError('explode');
       });
 
@@ -142,11 +142,11 @@ void main() {
       expect(recoveredThrown.isFailure, isTrue);
     });
 
-    test('recoverCatching passes through success', () {
+    test('tryRecoverSync passes through success', () {
       const success = Result<int, _TestError>.success(8);
       var called = false;
 
-      final recovered = success.recoverCatching((_) {
+      final recovered = success.tryRecoverSync((_) {
         called = true;
         return 9;
       });
@@ -155,33 +155,29 @@ void main() {
       expect(called, isFalse);
     });
 
-    test('mapCatchingAsync captures async thrown error', () async {
+    test('tryMap captures async thrown error', () async {
       const success = Result<int, _TestError>.success(4);
       const failure = Result<int, _TestError>.failure(_TestError('x'));
 
-      final mapped = await success.mapCatchingAsync((value) async => value * 3);
-      final mappedThrown = await success.mapCatchingAsync<int>((_) async {
+      final mapped = await success.tryMap((value) async => value * 3);
+      final mappedThrown = await success.tryMap<int>((_) async {
         await Future<void>.delayed(Duration.zero);
         throw StateError('explode');
       });
-      final mappedFailure = await failure.mapCatchingAsync(
-        (value) async => value * 3,
-      );
+      final mappedFailure = await failure.tryMap((value) async => value * 3);
 
       expect(mapped, const Result<int, Object>.success(12));
       expect(mappedThrown.isFailure, isTrue);
       expect(mappedFailure, const Result<int, Object>.failure(_TestError('x')));
     });
 
-    test('recoverCatchingAsync captures async thrown error', () async {
+    test('tryRecover captures async thrown error', () async {
       const success = Result<int, _TestError>.success(8);
       const failure = Result<int, _TestError>.failure(_TestError('x'));
 
-      final recoveredSuccess = await success.recoverCatchingAsync(
-        (_) async => 9,
-      );
-      final recovered = await failure.recoverCatchingAsync((_) async => 9);
-      final recoveredThrown = await failure.recoverCatchingAsync((_) async {
+      final recoveredSuccess = await success.tryRecover((_) async => 9);
+      final recovered = await failure.tryRecover((_) async => 9);
+      final recoveredThrown = await failure.tryRecover((_) async {
         await Future<void>.delayed(Duration.zero);
         throw StateError('explode');
       });
@@ -216,15 +212,15 @@ void main() {
     });
   });
 
-  group('runCatching', () {
+  group('tryRunSync', () {
     test('returns success when no exception', () {
-      final result = runCatching(() => 'ok');
+      final result = tryRunSync(() => 'ok');
 
       expect(result, const Result<String, Object>.success('ok'));
     });
 
     test('returns failure when exception is thrown', () {
-      final result = runCatching<String>(() {
+      final result = tryRunSync<String>(() {
         throw StateError('oops');
       });
 
@@ -233,15 +229,15 @@ void main() {
     });
   });
 
-  group('runCatchingAsync', () {
+  group('tryRun', () {
     test('returns success when no exception', () async {
-      final result = await runCatchingAsync(() async => 'ok');
+      final result = await tryRun(() async => 'ok');
 
       expect(result, const Result<String, Object>.success('ok'));
     });
 
     test('returns failure when exception is thrown', () async {
-      final result = await runCatchingAsync<String>(() async {
+      final result = await tryRun<String>(() async {
         await Future<void>.delayed(Duration.zero);
         throw StateError('oops');
       });
@@ -251,7 +247,7 @@ void main() {
     });
 
     test('returns failure when action throws synchronously', () async {
-      final result = await runCatchingAsync<String>(() {
+      final result = await tryRun<String>(() {
         throw StateError('sync oops');
       });
 
@@ -260,7 +256,7 @@ void main() {
     });
 
     test('returns failure when Error is thrown', () async {
-      final result = await runCatchingAsync<String>(() async {
+      final result = await tryRun<String>(() async {
         throw _TestPanic();
       });
 
