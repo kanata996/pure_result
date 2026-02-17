@@ -1,39 +1,54 @@
-<!--
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
+# pure_result
 
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/tools/pub/writing-package-pages).
-
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/to/develop-packages).
--->
-
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
+A lightweight `Result` type for Dart/Flutter inspired by Kotlin and Swift.
 
 ## Features
 
-TODO: List what your package can do. Maybe include images, gifs, or videos.
-
-## Getting started
-
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
+- Dart 3 `sealed class` based API.
+- Strongly typed success and failure branches: `Result<T, E>`.
+- Functional transforms: `map`, `flatMap`, `mapError`, `flatMapError`.
+- Recovery and side-effects: `recover`, `recoverCatching`, `onSuccess`, `onFailure`.
+- Utility helpers: `fold`, `getOrThrow`, `getOrElse`, `getOrDefault`, `runCatching`.
 
 ## Usage
 
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder.
-
 ```dart
-const like = 'sample';
+import 'package:pure_result/pure_result.dart';
+
+Result<int, String> parsePort(String raw) {
+  final value = int.tryParse(raw);
+  if (value == null) {
+    return const Result.failure('Invalid port');
+  }
+  return Result.success(value);
+}
+
+void main() {
+  final result = parsePort('8080')
+      .map((port) => port + 1)
+      .onSuccess((value) => print('next port: $value'))
+      .onFailure((error) => print('error: $error'));
+
+  final display = result.fold(
+    (value) => 'OK($value)',
+    (error) => 'ERR($error)',
+  );
+
+  print(display);
+}
 ```
 
-## Additional information
+## Test
 
-TODO: Tell users more about the package: where to find more information, how to
-contribute to the package, how to file issues, what response they can expect
-from the package authors, and more.
+```bash
+flutter test
+```
+
+## Publish Checklist
+
+- Fill `homepage`, `repository`, and `issue_tracker` in `pubspec.yaml`.
+- Add a permissive license text in `LICENSE`.
+- Update version and changelog before each release.
+- Run `flutter analyze` and `flutter test`.
+- Dry run: `flutter pub publish --dry-run`.
+- Publish: `flutter pub publish`.
