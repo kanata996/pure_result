@@ -1,5 +1,6 @@
 name: pure_result
 description: A sealed Result<T, E> type for Dart and Flutter.
+publish_to: https://pub.dev
 version: 0.1.0
 homepage: https://github.com/kanata996/pure_result
 repository: https://github.com/kanata996/pure_result
