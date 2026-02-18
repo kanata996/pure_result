@@ -1,3 +1,9 @@
+## 0.1.1
+
+- Improved public API documentation across `Result`, async extensions, and try helpers.
+- Enabled `public_member_api_docs` lint to keep API docs coverage enforced.
+- Expanded package description in `pubspec.yaml` for clearer pub.dev metadata.
+
 ## 0.1.0
 
 - Initial release of sealed `Result<T, E>`.

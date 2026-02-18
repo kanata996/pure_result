@@ -1,6 +1,6 @@
 name: pure_result
 description: A sealed Result<T, E> package for Dart and Flutter to model success and failure explicitly in app, package, and async domain error handling.
-version: 0.1.0
+version: 0.1.1
 homepage: https://github.com/kanata996/pure_result
 repository: https://github.com/kanata996/pure_result
 issue_tracker: https://github.com/kanata996/pure_result/issues
