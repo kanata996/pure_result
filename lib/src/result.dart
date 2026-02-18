@@ -39,6 +39,14 @@ sealed class Result<T, E extends Object> {
     };
   }
 
+  /// Named-parameter variant of [fold] for improved readability.
+  R when<R>({
+    required R Function(T value) success,
+    required R Function(E error) failure,
+  }) {
+    return fold(success, failure);
+  }
+
   /// Returns the success value, or computes a fallback from the error.
   T getOrElse(T Function(E error) onFailure) {
     return fold((value) => value, onFailure);

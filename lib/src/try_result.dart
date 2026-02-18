@@ -12,6 +12,14 @@ final class CaughtError {
   final StackTrace stackTrace;
 
   @override
+  bool operator ==(Object other) {
+    return other is CaughtError && other.error == error;
+  }
+
+  @override
+  int get hashCode => Object.hash(CaughtError, error);
+
+  @override
   String toString() => 'CaughtError(error: $error, stackTrace: $stackTrace)';
 }
 

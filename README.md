@@ -113,6 +113,18 @@ final label = Result<int, String>.success(7).fold(
 // value:7
 ```
 
+### `when`
+
+Named-parameter variant of `fold` for improved readability:
+
+```dart
+final label = Result<int, String>.success(7).when(
+  success: (v) => 'value:$v',
+  failure: (e) => 'error:$e',
+);
+// value:7
+```
+
 ### `getOrElse`
 
 ```dart
@@ -250,7 +262,7 @@ From `package:pure_result/pure_result.dart`:
 - `Result.success` / `Result.failure`
 - `isSuccess` / `isFailure`
 - `valueOrNull` / `errorOrNull`
-- `fold` / `getOrElse` / `getOrThrow`
+- `fold` / `when` / `getOrElse` / `getOrThrow`
 - `map` / `flatMap` / `mapError` / `flatMapError` / `recover`
 - `tryRunSync` / `tryRun`
 - `CaughtError`

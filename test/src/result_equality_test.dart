@@ -50,5 +50,19 @@ void main() {
       expect(text, contains('Bad state: oops'));
       expect(text, contains('stackTrace:'));
     });
+
+    test('CaughtError supports value equality based on error', () {
+      final error = StateError('oops');
+      final other = StateError('other');
+      final a = CaughtError(error, StackTrace.current);
+      final b = CaughtError(error, StackTrace.empty);
+      final c = CaughtError(other, StackTrace.current);
+
+      expect(a, equals(b));
+      expect(a, isNot(equals(c)));
+      expect(a.hashCode, b.hashCode);
+      expect(a.hashCode, Object.hash(CaughtError, error));
+      expect(a, isNot(equals('not a CaughtError')));
+    });
   });
 }

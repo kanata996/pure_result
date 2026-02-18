@@ -37,5 +37,19 @@ void main() {
       expect(success.getOrThrow(), 7);
       expect(() => failure.getOrThrow(), throwsA(isA<TestError>()));
     });
+
+    test('when routes to correct named branch', () {
+      const success = Result<int, TestError>.success(5);
+      const failure = Result<int, TestError>.failure(TestError('x'));
+
+      expect(
+        success.when(success: (v) => 'ok:$v', failure: (e) => 'err'),
+        'ok:5',
+      );
+      expect(
+        failure.when(success: (v) => 'ok', failure: (e) => 'err:${e.message}'),
+        'err:x',
+      );
+    });
   });
 }
