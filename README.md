@@ -43,7 +43,7 @@ void main() {
 ## Test
 
 ```bash
-flutter test
+dart test
 ```
 
 ## Publish Checklist
@@ -51,6 +51,6 @@ flutter test
 - Fill `homepage`, `repository`, and `issue_tracker` in `pubspec.yaml`.
 - Add a permissive license text in `LICENSE`.
 - Update version and changelog before each release.
-- Run `flutter analyze` and `flutter test`.
-- Dry run: `flutter pub publish --dry-run`.
-- Publish: `flutter pub publish`.
+- Run `dart analyze` and `dart test`.
+- Dry run: `dart pub publish --dry-run`.
+- Publish: `dart pub publish`.

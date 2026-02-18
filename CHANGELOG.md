@@ -1,4 +1,4 @@
-## 0.0.1
+## 0.1.0
 
 - Initial release of sealed `Result<T, E>`.
 - Added `Success`/`Failure` variants and factory constructors.
