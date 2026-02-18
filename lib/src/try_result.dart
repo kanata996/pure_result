@@ -2,16 +2,22 @@ import 'result.dart';
 
 /// Captured error value and stack trace from a thrown exception/error.
 final class CaughtError {
+  /// Creates a captured error with its [stackTrace].
   const CaughtError(this.error, this.stackTrace);
 
+  /// The thrown object.
   final Object error;
+
+  /// The stack trace captured when [error] was thrown.
   final StackTrace stackTrace;
 
   @override
   String toString() => 'CaughtError(error: $error, stackTrace: $stackTrace)';
 }
 
+/// Safe composition helpers that capture thrown errors into `Result` values.
 extension TryResultOps<T, E extends Object> on Result<T, E> {
+  /// Maps a success value and captures thrown errors as `Object` failures.
   Result<R, Object> tryMapSync<R>(R Function(T value) transform) {
     return switch (this) {
       Success(value: final value) => tryRunSync(() => transform(value)),
@@ -19,6 +25,7 @@ extension TryResultOps<T, E extends Object> on Result<T, E> {
     };
   }
 
+  /// Async variant of [tryMapSync].
   Future<Result<R, Object>> tryMap<R>(
     Future<R> Function(T value) transform,
   ) {
@@ -29,6 +36,7 @@ extension TryResultOps<T, E extends Object> on Result<T, E> {
     };
   }
 
+  /// Recovers from failure and captures thrown errors as `Object` failures.
   Result<T, Object> tryRecoverSync(T Function(E error) transform) {
     return switch (this) {
       Success(value: final value) => Result.success(value),
@@ -36,6 +44,7 @@ extension TryResultOps<T, E extends Object> on Result<T, E> {
     };
   }
 
+  /// Async variant of [tryRecoverSync].
   Future<Result<T, Object>> tryRecover(
     Future<T> Function(E error) transform,
   ) {

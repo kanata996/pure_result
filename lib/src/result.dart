@@ -4,26 +4,34 @@
 /// failure, then compose with APIs like `map`, `flatMap`, `recover`, and
 /// `fold`.
 sealed class Result<T, E extends Object> {
+  /// Base constructor for [Result] variants.
   const Result();
 
+  /// Creates a successful [Result] containing [value].
   const factory Result.success(T value) = Success<T, E>;
 
+  /// Creates a failed [Result] containing [error].
   const factory Result.failure(E error) = Failure<T, E>;
 
+  /// Whether this instance is a [Success].
   bool get isSuccess => this is Success<T, E>;
 
+  /// Whether this instance is a [Failure].
   bool get isFailure => this is Failure<T, E>;
 
+  /// Returns the success value, or `null` when this is a failure.
   T? get valueOrNull => switch (this) {
     Success(value: final value) => value,
     Failure() => null,
   };
 
+  /// Returns the failure error, or `null` when this is a success.
   E? get errorOrNull => switch (this) {
     Success() => null,
     Failure(error: final error) => error,
   };
 
+  /// Maps this result to a single value by handling both cases.
   R fold<R>(R Function(T value) onSuccess, R Function(E error) onFailure) {
     return switch (this) {
       Success(value: final value) => onSuccess(value),
@@ -31,10 +39,12 @@ sealed class Result<T, E extends Object> {
     };
   }
 
+  /// Returns the success value, or computes a fallback from the error.
   T getOrElse(T Function(E error) onFailure) {
     return fold((value) => value, onFailure);
   }
 
+  /// Returns the success value, or throws the contained failure error.
   T getOrThrow() {
     return switch (this) {
       Success(value: final value) => value,
@@ -42,6 +52,7 @@ sealed class Result<T, E extends Object> {
     };
   }
 
+  /// Transforms the success value while preserving the error type.
   Result<R, E> map<R>(R Function(T value) transform) {
     return switch (this) {
       Success(value: final value) => Result.success(transform(value)),
@@ -49,6 +60,7 @@ sealed class Result<T, E extends Object> {
     };
   }
 
+  /// Chains another [Result]-producing transform on success.
   Result<R, E> flatMap<R>(Result<R, E> Function(T value) transform) {
     return switch (this) {
       Success(value: final value) => transform(value),
@@ -56,6 +68,7 @@ sealed class Result<T, E extends Object> {
     };
   }
 
+  /// Transforms the failure error while preserving the success type.
   Result<T, F> mapError<F extends Object>(F Function(E error) transform) {
     return switch (this) {
       Success(value: final value) => Result.success(value),
@@ -63,6 +76,7 @@ sealed class Result<T, E extends Object> {
     };
   }
 
+  /// Chains another [Result]-producing transform on failure.
   Result<T, F> flatMapError<F extends Object>(
     Result<T, F> Function(E error) transform,
   ) {
@@ -72,6 +86,7 @@ sealed class Result<T, E extends Object> {
     };
   }
 
+  /// Converts a failure into success using [transform].
   Result<T, E> recover(T Function(E error) transform) {
     return switch (this) {
       Success() => this,
@@ -80,9 +95,12 @@ sealed class Result<T, E extends Object> {
   }
 }
 
+/// Success variant of [Result] that stores a value.
 final class Success<T, E extends Object> extends Result<T, E> {
+  /// Creates a success value.
   const Success(this.value);
 
+  /// The wrapped success value.
   final T value;
 
   @override
@@ -97,9 +115,12 @@ final class Success<T, E extends Object> extends Result<T, E> {
   String toString() => 'Success($value)';
 }
 
+/// Failure variant of [Result] that stores an error.
 final class Failure<T, E extends Object> extends Result<T, E> {
+  /// Creates a failure value.
   const Failure(this.error);
 
+  /// The wrapped failure error.
   final E error;
 
   @override
