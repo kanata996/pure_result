@@ -21,10 +21,11 @@ extension TryResultOps<T, E extends Object> on Result<T, E> {
 
   Future<Result<R, Object>> tryMap<R>(
     Future<R> Function(T value) transform,
-  ) async {
+  ) {
     return switch (this) {
       Success(value: final value) => tryRun(() => transform(value)),
-      Failure(error: final error) => Result.failure(error),
+      Failure(error: final error) =>
+        Future.value(Result<R, Object>.failure(error)),
     };
   }
 
@@ -37,9 +38,10 @@ extension TryResultOps<T, E extends Object> on Result<T, E> {
 
   Future<Result<T, Object>> tryRecover(
     Future<T> Function(E error) transform,
-  ) async {
+  ) {
     return switch (this) {
-      Success(value: final value) => Result.success(value),
+      Success(value: final value) =>
+        Future.value(Result<T, Object>.success(value)),
       Failure(error: final error) => tryRun(() => transform(error)),
     };
   }

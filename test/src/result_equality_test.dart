@@ -26,6 +26,14 @@ void main() {
       expect(failureA.hashCode, failureB.hashCode);
     });
 
+    test('hashCode follows documented identity seed order', () {
+      const success = Result<int, TestError>.success(1);
+      const failure = Result<int, TestError>.failure(TestError('x'));
+
+      expect(success.hashCode, Object.hash(Success, 1));
+      expect(failure.hashCode, Object.hash(Failure, const TestError('x')));
+    });
+
     test('toString is readable', () {
       expect(const Result<int, TestError>.success(1).toString(), 'Success(1)');
       expect(
