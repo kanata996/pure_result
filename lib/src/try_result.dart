@@ -15,46 +15,6 @@ final class CaughtError {
   String toString() => 'CaughtError(error: $error, stackTrace: $stackTrace)';
 }
 
-/// Safe composition helpers that capture thrown errors into `Result` values.
-extension TryResultOps<T, E extends Object> on Result<T, E> {
-  /// Maps a success value and captures thrown errors as `Object` failures.
-  Result<R, Object> tryMapSync<R>(R Function(T value) transform) {
-    return switch (this) {
-      Success(value: final value) => tryRunSync(() => transform(value)),
-      Failure(error: final error) => Result.failure(error),
-    };
-  }
-
-  /// Async variant of [tryMapSync].
-  Future<Result<R, Object>> tryMap<R>(
-    Future<R> Function(T value) transform,
-  ) {
-    return switch (this) {
-      Success(value: final value) => tryRun(() => transform(value)),
-      Failure(error: final error) =>
-        Future.value(Result<R, Object>.failure(error)),
-    };
-  }
-
-  /// Recovers from failure and captures thrown errors as `Object` failures.
-  Result<T, Object> tryRecoverSync(T Function(E error) transform) {
-    return switch (this) {
-      Success(value: final value) => Result.success(value),
-      Failure(error: final error) => tryRunSync(() => transform(error)),
-    };
-  }
-
-  /// Async variant of [tryRecoverSync].
-  Future<Result<T, Object>> tryRecover(
-    Future<T> Function(E error) transform,
-  ) {
-    return switch (this) {
-      Success(value: final value) =>
-        Future.value(Result<T, Object>.success(value)),
-      Failure(error: final error) => tryRun(() => transform(error)),
-    };
-  }
-}
 
 /// Runs [action] and captures thrown exceptions/errors as [CaughtError].
 Result<T, CaughtError> tryRunSync<T>(T Function() action) {

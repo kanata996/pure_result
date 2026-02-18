@@ -1,3 +1,9 @@
+## 0.1.2
+
+- Removed `TryResultOps` extension (`tryMapSync`, `tryMap`, `tryRecoverSync`, `tryRecover`) — these methods erased the error type to `Object`, undermining type safety.
+- Retained core exception capture helpers: `tryRunSync`, `tryRun`, `CaughtError`.
+- Updated README with composable usage examples using `tryRunSync` + `flatMap`.
+
 ## 0.1.1
 
 - Improved public API documentation across `Result`, async extensions, and try helpers.

@@ -13,14 +13,14 @@ A sealed `Result<T, E>` type for Dart and Flutter.
 - ✅ Dart 3 `sealed class` API.
 - ✅ Strongly typed success and error channels (`T` / `E`).
 - ✅ Functional composition: `map`, `flatMap`, `mapError`, `flatMapError`, `recover`.
-- ✅ Exception capture helpers: `tryRunSync`, `tryRun`, `tryMapSync`, `tryMap`, `tryRecoverSync`, `tryRecover`.
+- ✅ Exception capture helpers: `tryRunSync`, `tryRun`.
 - ✅ Async chaining on `Future<Result<...>>` via `AsyncResultOps`.
 
 ## 📦 Installation
 
 ```yaml
 dependencies:
-  pure_result: ^0.1.0
+  pure_result: ^0.1.2
 ```
 
 Then run:
@@ -191,30 +191,6 @@ final result = await tryRun(() async {
 // Success(done)
 ```
 
-### `tryMapSync` / `tryMap`
-
-```dart
-const source = Result<int, String>.success(5);
-
-final syncMapped = source.tryMapSync((v) => v * 2);
-// Success(10)
-
-final asyncMapped = await source.tryMap((v) async => v * 3);
-// Success(15)
-```
-
-### `tryRecoverSync` / `tryRecover`
-
-```dart
-const failed = Result<int, String>.failure('network');
-
-final syncRecovered = failed.tryRecoverSync((_) => 1);
-// Success(1)
-
-final asyncRecovered = await failed.tryRecover((_) async => 2);
-// Success(2)
-```
-
 `CaughtError` stores both `error` and `stackTrace`:
 
 ```dart
@@ -224,6 +200,23 @@ if (r.isFailure) {
   print(ce.error); // StateError: Bad state: explode
   print(ce.stackTrace);
 }
+```
+
+### Composing `tryRunSync` with existing APIs
+
+You can combine `tryRunSync` / `tryRun` with `fold`, `map`, or `flatMap`
+to handle exceptions in a pipeline without losing type safety:
+
+```dart
+// Map a success value with a function that might throw:
+final result = tryRunSync(() => int.parse(rawInput))
+    .map((n) => n * 2);
+// Success(result) or Failure(CaughtError(...))
+
+// Chain multiple fallible steps:
+final chained = tryRunSync(() => step1())
+    .flatMap((v) => tryRunSync(() => step2(v)));
+// Each step is independently captured
 ```
 
 ## 🌊 Async Result Chaining (`AsyncResultOps`)
@@ -260,8 +253,6 @@ From `package:pure_result/pure_result.dart`:
 - `fold` / `getOrElse` / `getOrThrow`
 - `map` / `flatMap` / `mapError` / `flatMapError` / `recover`
 - `tryRunSync` / `tryRun`
-- `tryMapSync` / `tryMap`
-- `tryRecoverSync` / `tryRecover`
 - `CaughtError`
 
 From `package:pure_result/async_result.dart`:
