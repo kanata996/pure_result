@@ -1,3 +1,10 @@
+## 0.1.3
+
+- Added `Result.when()` — named-parameter variant of `fold` for improved readability.
+- Added `CaughtError` value equality (`==` / `hashCode`) based on error identity.
+- Added `example/pure_result_example.dart` covering all public APIs.
+- Supplemented unit tests for `when` and `CaughtError` equality (100% coverage).
+
 ## 0.1.2
 
 - Removed `TryResultOps` extension (`tryMapSync`, `tryMap`, `tryRecoverSync`, `tryRecover`) — these methods erased the error type to `Object`, undermining type safety.

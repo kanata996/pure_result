@@ -13,6 +13,7 @@ A sealed `Result<T, E>` type for Dart and Flutter.
 - ✅ Dart 3 `sealed class` API.
 - ✅ Strongly typed success and error channels (`T` / `E`).
 - ✅ Functional composition: `map`, `flatMap`, `mapError`, `flatMapError`, `recover`.
+- ✅ Named-parameter matching: `when` for readable branching.
 - ✅ Exception capture helpers: `tryRunSync`, `tryRun`.
 - ✅ Async chaining on `Future<Result<...>>` via `AsyncResultOps`.
 
@@ -20,7 +21,7 @@ A sealed `Result<T, E>` type for Dart and Flutter.
 
 ```yaml
 dependencies:
-  pure_result: ^0.1.2
+  pure_result: ^0.1.3
 ```
 
 Then run:
@@ -162,13 +163,16 @@ final chained = readCount().flatMap(toText);
 ```dart
 const failed = Result<int, String>.failure('not_found');
 
+// mapError: transform the error type
 final mappedError = failed.mapError((msg) => msg.length);
 // Failure(9)
 
-final remapped = failed.flatMapError(
-  (msg) => Result<int, int>.failure(msg.length),
-);
-// Failure(9)
+// flatMapError: attempt recovery or map to a different error
+final retried = failed.flatMapError((msg) {
+  if (msg == 'not_found') return const Result.success(-1); // fallback
+  return Result<int, int>.failure(msg.length);
+});
+// Success(-1)
 ```
 
 ### `recover`
@@ -250,6 +254,7 @@ final result = await fetchPort()
     .map((port) => port + 1)
     .flatMap((port) => Result<String, String>.success('port=$port'))
     .mapError((e) => 'ERR:$e')
+    .flatMapError((e) async => const Result.success('port=fallback'))
     .recover((_) => 'port=80');
 
 print(result); // Success(port=8081)
