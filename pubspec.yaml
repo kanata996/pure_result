@@ -1,5 +1,5 @@
 name: pure_result
-description: A sealed Result<T, E> type for Dart and Flutter.
+description: A sealed Result<T, E> package for Dart and Flutter to model success and failure explicitly in app, package, and async domain error handling.
 version: 0.1.0
 homepage: https://github.com/kanata996/pure_result
 repository: https://github.com/kanata996/pure_result
