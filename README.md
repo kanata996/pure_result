@@ -1,8 +1,8 @@
 # pure_result
 
 [![Pub](https://img.shields.io/pub/v/pure_result.svg)](https://pub.dev/packages/pure_result)
-[![CI](https://github.com/kanata996/pure_result/workflows/CI/badge.svg?branch=main)](https://github.com/kanata996/pure_result/actions/workflows/ci.yml)
-[![Codecov](https://codecov.io/github/kanata996/pure_result/graph/badge.svg?branch=main)](https://codecov.io/github/kanata996/pure_result)
+[![CI](https://github.com/kanata996/pure_result/workflows/CI/badge.svg)](https://github.com/kanata996/pure_result/actions/workflows/ci.yml)
+[![Codecov](https://codecov.io/github/kanata996/pure_result/graph/badge.svg)](https://codecov.io/github/kanata996/pure_result)
 
 A sealed `Result<T, E>` type for Dart and Flutter.
 
