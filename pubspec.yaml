@@ -1,5 +1,5 @@
 name: pure_result
-description: A sealed Result type for Dart and Flutter inspired by Kotlin and Swift.
+description: A sealed Result<T, E> type for Dart and Flutter.
 version: 0.1.0
 homepage: https://github.com/kanata996/pure_result
 repository: https://github.com/kanata996/pure_result
